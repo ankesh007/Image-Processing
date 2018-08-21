@@ -19,16 +19,16 @@ Check out `color_quantization` folder for different quantization algorithms.
 
 To run code, change to folder: cd `color_quantization`
 
-To run popularity algorithm:
+To run popularity algorithm: 
 `python popularity.py <input_image_path> <output_image_path> <color_palette> <dither(True/False)>`
 
-To run median_cut algorithm:
+To run median_cut algorithm: 
 `python median_cut.py <input_image_path> <output_image_path> <color_palette> <dither(True/False)>`
 
 ### Results
 
 Some results are displayed. To interpret, check name of image. The name is in format:
-OriginalName_{P|M}{D}{COLOR_PALETTE}.jpg.
+OriginalName_{P|M}{D}{COLOR_PALETTE}.jpg. 
 M|P indicates Median-cut|Popularity
 D   indicates Dithering
 
