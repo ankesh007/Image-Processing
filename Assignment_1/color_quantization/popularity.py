@@ -6,7 +6,8 @@ color_levels=256
 
 if(len(sys.argv)<5):
 	print("Usage: python <script> <input_image_path> <output_image_path> <color_palette> <dither(True/False)>")
-
+	exit()
+	
 def getRep(pixel_color,rep_color):
 	# print(pixel_color.shape)
 	mini=1e18
@@ -73,6 +74,8 @@ def popularity_quantization(img_inp,keep_colors=10,dither=False):
 	return img
 
 color_palette=int(sys.argv[3])
-dither=bool(sys.argv[4])
+dither=False
+if sys.argv[4]=='True':
+	dither=True
 img=cv2.imread(sys.argv[1],cv2.IMREAD_COLOR)
 cv2.imwrite(sys.argv[2],popularity_quantization(img,color_palette,dither))

@@ -7,6 +7,7 @@ color_levels=256
 
 if(len(sys.argv)<5):
 	print("Usage: python <script> <input_image_path> <output_image_path> <color_palette> <dither(True/False)>")
+	exit()
 
 def getRep(pixel_color,rep_color):
 	# print(pixel_color.shape)
@@ -124,7 +125,9 @@ def median_cut_quantization(img_inp,keep_colors=10,dither=False):
 		# print(box_coord)
 		cut_val=getMedian(dp,one_box[0][0],one_box[1][0],one_box[2][0],one_box[0][1],one_box[1][1],one_box[2][1],axis)
 		box_coord[index][axis][1]=cut_val
-		print("boxes:",boxes,"axis:",axis,"maxy:",maxy,"cutval:",cut_val)
+		print("boxes:",boxes,"axis:",axis,"maxy:",maxy,"cutval:",cut_val,"index:",index)
+		# for boxe in box_coord:
+		# 	print(boxe)
 
 		new_box=list(one_box)
 		box_coord.append(new_box)
@@ -147,7 +150,7 @@ def median_cut_quantization(img_inp,keep_colors=10,dither=False):
 					else:
 						flag=False
 						break
-				if(dither==True):
+				if(flag==True):
 					count[z]+=1
 					for d in range(depth):
 						representative_color[z][d]+=int(img[h,w,d])
@@ -172,6 +175,8 @@ def median_cut_quantization(img_inp,keep_colors=10,dither=False):
 	return img
 
 color_palette=int(sys.argv[3])
-dither=bool(sys.argv[4])
+dither=False
+if sys.argv[4]=='True':
+	dither=True
 img=cv2.imread(sys.argv[1],cv2.IMREAD_COLOR)
 cv2.imwrite(sys.argv[2],median_cut_quantization(img,color_palette,dither))
