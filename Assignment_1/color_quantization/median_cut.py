@@ -162,6 +162,7 @@ def median_cut_quantization(img_inp,keep_colors=10,dither=False):
 				representative_color[i][d]=representative_color[i][d]//count[i]
 			else:
 				representative_color[i][d]=(int(box_coord[i][d][0])+box_coord[i][d][1])//2
+			representative_color[i][d]=max(0,representative_color[i][d]-1)
 
 	for h in range(height):
 		for w in range (width):
