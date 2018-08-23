@@ -5,12 +5,12 @@ import sys
 sigma = 0.1
 k = 1.6
 tau = 0.99
-eps = 0.005
-phi = 10
+eps = 0.67
+phi = 5.5
 
 
 # if(len(sys.argv)<3):
-# 	print("Usage: python <script> <input_image_path> <output_image_path>")
+#   print("Usage: python <script> <input_image_path> <output_image_path>")
 
 def DoG(src, sigma, k, tau):
     g1 = cv2.GaussianBlur(src, (5, 5), sigma)
@@ -24,8 +24,8 @@ def XDoG(src, sigma, k, tau, eps, phi0):
     dog = DoG(src, sigma, k, tau)
     out = dog.copy()
 
-    out[dog < eps * 255] = 255
-    out[dog >= eps * 255] = 255 * (1 - np.tanh(phi * dog[dog >= eps * 255]))  # Minus instead of plus
+    out[dog >= eps * 255] = 255
+    out[dog < eps * 255] = 255 * (1 + np.tanh(phi * (dog[dog < eps * 255]/255-eps)))
 
     cv2.imshow('dog', dog)
     cv2.imshow('xdog', out)
