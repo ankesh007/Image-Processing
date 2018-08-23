@@ -25,6 +25,14 @@ To run popularity algorithm:
 To run median_cut algorithm:  
 `python median_cut.py <input_image_path> <output_image_path> <color_palette> <dither(True/False)>`
 
+## XDOG 
+
+Check out `color_quantization` folder for different quantization algorithms.
+
+To run code
+
+`python xdog.py <input_image_path> <output_image_path>`
+
 ### Results
 
 Some results are displayed. To interpret, check name of image. The name is in format:
