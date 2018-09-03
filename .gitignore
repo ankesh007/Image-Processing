@@ -39,3 +39,4 @@ relative/path/to/dir/anotherfile
 !*Makefile
 .DS_Store
 *.ipynb_checkpoints/
+*.vs/
