@@ -1,4 +1,4 @@
-# Painterly Rendered Images
+# Image Scaling
 
 ## Problem Statement
 
@@ -8,13 +8,21 @@ This is a warm up assignment as discussed in the class. The basic intent of this
 
 To run code that scales entire image:
 
-`python scaling.py <input_image_path> <output_image_path> <scale_factor:1 for no scaling>`
+`python scaling.py [-h] --input INPUT_IMAGE_PATH --output OUTPUT_IMAGE_PATH [--scale SCALE] [--interpolate] [--replicate]`
+
+Note:  
+`--input` and `--output` are mandatory flags  
+`--scale` defaults to 1  
+
+If none of the scaling methods flags are set, the mode defaults to `replication`  
+If both flags are set, mode defaults to `interpolation`  
 
 
 ### Results
 
 Some results are displayed. To interpret, check name of image. The name is in format:
 ``
-OriginalName?{_dot}{SCALE_FACTOR_WITHOUT_DECIMALS}.jpg
+OriginalName?{_R}{SCALE}.jpg
 ``
-The dot part indicates downscaling - _dot_25_ means scale factor is 0.25
+_\_R_ represents Replication mode was used to generate
+dot represents . for decimal
