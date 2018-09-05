@@ -58,7 +58,6 @@ def scale(img_inp, factor=1, interpolate=False):
 
 parser = argparse.ArgumentParser(description='Image Scaling')
 parser.add_argument('--input', dest='input_image_path', help="Enter Input Image Path", required=True, type=str)
-parser.add_argument('--output', dest='output_image_path', help="Enter Output Image Path", required=True, type=str)
 parser.add_argument('--scale', dest='scale', help="Enter Scale Factor", default=1, type=float)
 parser.add_argument('--interpolate', action='store_true', default='False', help="Perform Replication")
 parser.add_argument('--replicate', action='store_true', default='False', help="Perform Replication")

@@ -8,7 +8,13 @@ This is a warm up assignment as discussed in the class. The basic intent of this
 
 To run code that scales entire image:
 
-`python scaling.py [-h] --input INPUT_IMAGE_PATH --output OUTPUT_IMAGE_PATH [--scale SCALE] [--interpolate] [--replicate] [--sizex X] [--sizey Y]`
+`python scale_entire_image.py [-h] --input INPUT_IMAGE_PATH --output OUTPUT_IMAGE_PATH [--scale SCALE] [--interpolate] [--replicate]`
+
+To scale a window realtime:
+
+`python scale_window.py [-h] --input INPUT_IMAGE_PATH [--scale SCALE] [--interpolate] [--replicate] [--sizex] [--sizey]`
+
+The code asks user to **click a point** which acts as centre of ***2\*sizex X 2\*sizey*** sized rectangle and displays the scaled version of cropped image
 
 Note:  
 `--input` and `--output` are mandatory flags  
