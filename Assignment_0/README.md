@@ -8,7 +8,7 @@ This is a warm up assignment as discussed in the class. The basic intent of this
 
 To run code that scales entire image:
 
-`python scaling.py [-h] --input INPUT_IMAGE_PATH --output OUTPUT_IMAGE_PATH [--scale SCALE] [--interpolate] [--replicate]`
+`python scaling.py [-h] --input INPUT_IMAGE_PATH --output OUTPUT_IMAGE_PATH [--scale SCALE] [--interpolate] [--replicate] [--sizex X] [--sizey Y]`
 
 Note:  
 `--input` and `--output` are mandatory flags  
