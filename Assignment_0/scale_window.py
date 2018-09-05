@@ -67,20 +67,31 @@ parser.add_argument('--sizey', dest='sizey', default=50, help="Window size y", t
 
 args = parser.parse_args()
 img = cv2.imread(args.input_image_path, cv2.IMREAD_COLOR)
-final_img = None
+height, width, depth = img.shape
 
 
-if (args.interpolate == True):
-    final_img = scale(img, args.scale, True)
-else:
-    final_img = scale(img, args.scale, False)
+# final_img = None
+# if (args.interpolate == True):
+#     final_img = scale(img, args.scale, True)
+# else:
+#     final_img = scale(img, args.scale, False)
 
 
 def show_zoom(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDBLCLK:
         print(x,y)
-        z = final_img[int(y*args.scale)-args.sizey:int(y*args.scale) + args.sizey, int(x*args.scale)-args.sizex:int(x*args.scale) + args.sizex]
-        cv2.imshow('zoom', z)
+        # z = final_img[int(y*args.scale)-args.sizey:int(y*args.scale) + args.sizey, int(x*args.scale)-args.sizex:int(x*args.scale) + args.sizex]
+        lefty=max(0,y-args.sizey)
+        righty=min(height,y+args.sizey)
+        leftx=max(0,x-args.sizex)
+        rightx=min(width,x+args.sizex)
+        flag=False
+
+        if(args.interpolate==True):
+        	flag=True
+        
+        cv2.imshow('zoom', scale(img[lefty:righty,leftx:rightx],args.scale,flag))
+
 
 cv2.namedWindow('src')
 cv2.setMouseCallback('src',show_zoom)
