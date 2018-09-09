@@ -44,10 +44,10 @@ def scale(img_inp, factor=1, interpolate=False):
                 bottomleft = img[index_h + 1, index_w, :].astype(np.float)
                 bottomright = img[index_h + 1, index_w + 1, :].astype(np.float)
 
-                interpolate_1 = topleft * (inter_w - index_w) + topright * (index_w + 1 - inter_w)
-                interpolate_2 = bottomleft * (inter_w - index_w) + bottomright * (index_w + 1 - inter_w)
+                interpolate_1 = topright * (inter_w - index_w) + topleft * (index_w + 1 - inter_w)
+                interpolate_2 = bottomright * (inter_w - index_w) + bottomleft * (index_w + 1 - inter_w)
 
-                final_interpolate = interpolate_1 * (inter_h - index_h) + interpolate_2 * (index_h + 1 - inter_h)
+                final_interpolate = interpolate_2 * (inter_h - index_h) + interpolate_1 * (index_h + 1 - inter_h)
                 final_interpolate = final_interpolate.astype(np.uint8)
                 scaled_img[h, w, :] = final_interpolate
 
