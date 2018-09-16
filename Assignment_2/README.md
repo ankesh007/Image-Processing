@@ -28,8 +28,9 @@ To run image morphing algorithm:
 `python morphing.py --source <SOURCE_IMAGE_PATH> --dest <DESTINATION_IMAGE_PATH> [--k no_of_interim_images] --output OUTPUT_IMAGE_PATH`
 
 Note:  
-1. Default no. of interim images=10
-2. ith Images generated is saved as: OUTPUT_IMAGE_PATH_i.jpg 
+1. Source and destination images pop up. Select ***corresponding*** feature points in both images. Press `Esc` key after selecting requisite points. 
+2. Default no. of interim images=10
+3. ith Images generated is saved as: OUTPUT_IMAGE_PATH_i.jpg 
 
 ### Assumptions
 
