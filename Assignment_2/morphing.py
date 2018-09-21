@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
-import sys
 import copy
 import argparse
 from scipy.spatial import Delaunay
