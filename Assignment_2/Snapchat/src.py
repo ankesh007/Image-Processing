@@ -1,6 +1,6 @@
 import cv2
 
-ch = 2
+ch = 1
 
 faceCascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 mst = cv2.imread('moustache.png')
@@ -59,6 +59,8 @@ while True:
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     faces = faceCascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(40, 40))
+    print(len(faces))
+    print(faces)
     for (x, y, w, h) in faces:
         if ch == 0:
             frame = apply_mst(mst, frame, x, y, w, h)
