@@ -13,14 +13,15 @@ def apply_mst(filter, frame, x, y, w, h):
     mst_h = int(h * 0.15)
     off_x = int(w * 0.25)
     off_y = int(h * 0.65)
+    sizey, sizex, sizez = frame.shape
     filter = cv2.resize(filter, (mst_w, mst_h))
     for i in range(mst_h):
         for j in range(mst_w):
             for k in range(3):
                 if filter[i][j][k] < 235:  # to remove background white
-                    frame[y + i + off_y][x + j + off_x][k] = filter[i][j][k]
+                    if y + i + off_y < sizey and x + j + off_x < sizex:
+                        frame[y + i + off_y][x + j + off_x][k] = filter[i][j][k]
     return frame
-
 
 
 def apply_hat(filter, frame, x, y, w, h):
@@ -28,25 +29,30 @@ def apply_hat(filter, frame, x, y, w, h):
     mst_h = int(h * 0.9)
     off_x = int(w * -0.25)
     off_y = int(h * -0.65)
+    sizey, sizex, sizez = frame.shape
     filter = cv2.resize(filter, (mst_w, mst_h))
     for i in range(mst_h):
         for j in range(mst_w):
             for k in range(3):
                 if filter[i][j][k] < 235:  # to remove background white
-                    frame[y + i + off_y][x + j + off_x][k] = filter[i][j][k]
+                    if y + i + off_y < sizey and x + j + off_x < sizex:
+                        frame[y + i + off_y][x + j + off_x][k] = filter[i][j][k]
     return frame
+
 
 def apply_dog(filter, frame, x, y, w, h):
     mst_w = int(w * 1.5)
     mst_h = int(h * 2.5)
     off_x = int(w * -0.35)
     off_y = int(h * -0.65)
+    sizey, sizex, sizez = frame.shape
     filter = cv2.resize(filter, (mst_w, mst_h))
     for i in range(mst_h):
         for j in range(mst_w):
             for k in range(3):
                 if filter[i][j][k] < 235:  # to remove background white
-                    frame[y + i + off_y][x + j + off_x][k] = filter[i][j][k]
+                    if y + i + off_y < sizey and x + j + off_x < sizex:
+                        frame[y + i + off_y][x + j + off_x][k] = filter[i][j][k]
     return frame
 
 
