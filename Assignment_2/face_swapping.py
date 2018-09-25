@@ -326,10 +326,10 @@ def face_swap(src_img,dest_img,src_points_np,dest_points_np,output_image_path,k=
     center=((bb[0]+int(bb[2]/2), bb[1]+int(bb[3]/2))) 
     cv2.imwrite(output_image_path+"_mask.jpg",dest_mask)
 
-    for i in range(k):
+    for i in range(k+1):
         print(i)
         counter=0
-        rig_wt=(i+1)/float(args.k+1)
+        rig_wt=(i)/float(args.k)
         lef_wt=1.0-rig_wt
 
         for points in all_points:
