@@ -16,10 +16,7 @@ def pyramid_down(img,sigma=1):
 
 # Upsampling and Resizing
 def pyramid_up(img,dest_size=None):
-    # print(img.shape)
     upsampled_image=scipy.ndimage.zoom(img,[2,2,1], order=3)
-    # print(upsampled_image.shape)
-    # exit(0)
     
     if(dest_size is None):
         dest_size=upsampled_image.shape
@@ -49,6 +46,22 @@ def laplacian_pyramid(img=None,levels=None,gaussian_pyramid_list=None):
     laplacian_pyramid_list.append(gaussian_pyramid_list[levels-1])
 
     return laplacian_pyramid_list
+
+
+def reconstruct_from_laplacian(laplacian_pyramid):
+    x=len(laplacian_pyramid)
+
+    lap=laplacian_pyramid[x-1]
+    reconstructed_list=[lap]
+
+    for i in range(x-2,-1,-1):
+        lap=pyramid_up(lap,laplacian_pyramid[i].shape)
+        h,w,d=lap.shape
+        lap=laplacian_pyramid[i][0:h,0:w,0:d]+lap
+        reconstructed_list.append(lap)
+
+    return reconstructed_list
+
 
 def main():
     parser=argparse.ArgumentParser(description='Image Pyramid')
