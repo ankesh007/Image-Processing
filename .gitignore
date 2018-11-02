@@ -41,3 +41,4 @@ relative/path/to/dir/anotherfile
 *.ipynb_checkpoints/
 *.vs/
 *__pycache__
+*.vscode

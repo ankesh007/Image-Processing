@@ -2,7 +2,6 @@ import numpy as np
 import cv2
 import copy
 import argparse
-from scipy.spatial import Delaunay
 import os
 import scipy.ndimage
 import math

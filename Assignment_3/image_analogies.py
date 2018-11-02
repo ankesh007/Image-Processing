@@ -3,76 +3,253 @@ import numpy as np
 import cv2
 import copy
 import argparse
-from scipy.spatial import Delaunay
 import os
 import scipy.ndimage
 import math
 import pyramid
 from sklearn.feature_extraction.image import extract_patches_2d
-
-n_fine=5
+import time
+from panns import *
+"""
+https://github.com/ryanrhymes/panns
+"""
+#keep them odd
+n_fine=3
 n_coarse=3
+n_channel=3
+# half is used only with fine scale
+half=(n_fine**2)//2
+kappa=5
+inf=10**20
 
-def return_feature(img_sm,neighbour):
-    padded_img=np.pad(img_sm, neighbour//2, mode='symmetric')
+approx_time=0
+coh_time=0
+
+def get_feature_matrix_(img_sm,neighbour,keep_half=False,last=False):
+    height,width,_=img_sm.shape
+    if last:
+        return np.zeros((height*width,neighbour*neighbour*n_channel))
+    padded_img = np.pad(img_sm, ((neighbour//2, neighbour//2),
+                                 (neighbour//2, neighbour//2), (0,0)), mode='symmetric')
     patches=extract_patches_2d(padded_img,(neighbour,neighbour))    
     unrolled_patches = patches.reshape(
         patches.shape[0], -1)
-    
+    if keep_half:
+        unrolled_patches=unrolled_patches[:,0:n_channel*half]
     return unrolled_patches
 
-def get_feature_vector(gA,gAp,level):
-    """
-    Handle last level
-    """
-    feat_A_l=return_feature(gA[level],n_fine)
-    feat_A_lprev=return_feature(pyramid.pyramid_up(gA[level+1],gA[level].shape),n_coarse)
-    feat_Ap_l=return_feature(gAp[level],n_fine)
-    feat_Ap_lprev = return_feature(pyramid.pyramid_up(
-        gAp[level+1], gAp[level].shape), n_coarse)
 
-    return np.concatenate((feat_A_l, feat_A_lprev, feat_Ap_l, feat_Ap_lprev), axis=1)
-
-def get_feature_matrix(gA,gA_,level=5):
+def get_feature_matrix(g_A,g_Ap,level=5):
+    """
+    Returns feature matrix given level of pyramid
+    For last level 2 options -> 1. append 0's
+    2. append same feature vector as l  
+    """
     indices=[]
-    height,width=gA[level].shape
+    height,width,_=g_A[level].shape
     feature_matrix=[]
+    rev_map={}
 
-    for h in height:
-        for w in width:
+    for h in range(height):
+        for w in range(width):
+            rev_map[(h,w)]=len(indices)
             indices.append((h,w))
 
-    feature_matrix=get_feature_vector(gA,gA_,level)
-    return feature_matrix,indices
+    x=len(g_A)
+    flag=True if level==(len(g_A)-1) else False
+    upp=min(x-1,level+1)
 
-def best_match():
+    feat_A_l=get_feature_matrix_(g_A[level],n_fine)
+    feat_A_lprev=get_feature_matrix_(pyramid.pyramid_up(g_A[upp],g_A[level].shape),n_coarse,last=flag)
+    feat_Ap_l=get_feature_matrix_(g_Ap[level],n_fine,keep_half=True)
+    feat_Ap_lprev = get_feature_matrix_(pyramid.pyramid_up(g_Ap[upp], g_Ap[level].shape), n_coarse,last=flag)
+    # print(feat_A_l.shape)
+    # print(feat_A_lprev.shape)
+    # print(feat_Ap_l.shape)
+    # print(feat_Ap_lprev.shape)
 
-def create_image_analogy(img_a,img_af,levels=5):
-    gaussian_a=pyramid.gaussian_pyramid(img_a,levels=levels)
-    gaussian_af = pyramid.gaussian_pyramid(img_af,levels=levels)
-    gaussian_b = pyramid.gaussian_pyramid(img_b,levels=levels)
+    feature_matrix = np.concatenate(
+        (feat_A_l, feat_A_lprev, feat_Ap_l, feat_Ap_lprev), axis=1)
+    return feature_matrix,indices,rev_map
 
-    # features_a,features_af,features_b=get_features(img_a,img_af,img_b)
-    gaussian_bf=[]
 
-    for image in gaussian_b:
-        gaussian_bf.append(np.zeros_like(image))
+def get_feature_vector_(img,row,col,neighbour,keep_half=False,last=False):
+    if last:
+        return np.zeros((neighbour*neighbour))
+    img = np.pad(img, ((neighbour//2, neighbour//2),
+                                 (neighbour//2, neighbour//2), (0, 0)), mode='symmetric')
+    px_feature = img[row//2: row//2 + neighbour,
+                                      col//2: col//2 + neighbour].flatten()
+
+    if keep_half:
+        px_feature = px_feature[:n_channel * half]
+
+    return px_feature
+
+
+def get_feature_vector(g_B,g_Bp,row,col,level):
+    flag=True if level+1==len(g_B) else False
+    x=len(g_B)
+    upp=min(x-1,level+1)
+
+    feat_B_l=get_feature_vector_(g_B[level],row,col,n_fine)
+    feat_B_lprev = get_feature_vector_(g_B[upp], row, col, n_coarse,last=flag)
+    feat_Bp_l = get_feature_vector_(g_Bp[level], row, col, n_fine,keep_half=True)
+    feat_Bp_lprev = get_feature_vector_(g_Bp[upp], row, col, n_coarse, last=flag)
+    # print("****")
+    # print(feat_B_l.shape)
+    # print(feat_B_lprev.shape)
+    # print(feat_Bp_l.shape)
+    # print(feat_Bp_lprev.shape)
+
+    return np.concatenate((feat_B_l,feat_B_lprev,feat_Bp_l,feat_Bp_lprev))    
     
-    nw=3
+def best_approx_match(feature_matrix,pixel_feature,indices):
+    """
+    return co-ordinates,dis of
+    best match in feature_matrix
+    """
+    x=len(indices)
+    mini=inf
+    index=0
+
+    for i in range(x):
+        norm=np.linalg.norm(pixel_feature-feature_matrix[i])
+        norm=norm**2
+        
+        if(norm<mini):
+            mini=norm
+            index=i
+    return (indices[index],mini)
 
 
-    for level in range(levels,-1,-1):
-        height,width,_=gaussian_b[level].shape
-        feature_matrix,indices=get_feature_matrix(gaussian_a,gaussian_af,level)
+def fast_approx_match(index_structure, pixel_feature, indices):
+    """
+    return co-ordinates,dis of
+    best match in feature_matrix
+    """
+    best_match=index_structure.query(pixel_feature,1)
+    # print(best_match)
+    return (indices[best_match[0][0]], best_match[0][1]**2)
 
-        for h in height:
-            for w in width:
-                pixel=best_match(gaussian_b,gaussian_bf,level,(h,w),feature_matrix,indices,nw)
-                gaussian_bf[level][h,w]=gaussian_af[level][pixel[0]][pixel[1]]
+def best_coherence_match(h,w,mapper,feature_matrix,rev_map,pixel_feature):
+    """
+    return co-ordinates,dis of
+    best coherence match
+    """
+    mini = inf
+    index = (h,w)
+
+    if(h-1>=0):
+        val = mapper[(h-1, w)]
+        nei=(val[0]+1,val[1])
+        if(nei in rev_map):
+            norm = np.linalg.norm(pixel_feature-feature_matrix[rev_map[nei]])
+            norm = norm**2
+
+            if(norm < mini):
+                mini = norm
+                index = nei
+
+    if(w-1>=0):
+        val = mapper[(h, w-1)]
+        nei=(val[0],val[1]+1)
+        if(nei in rev_map):
+            norm = np.linalg.norm(pixel_feature-feature_matrix[rev_map[nei]])
+            norm = norm**2
+
+            if(norm < mini):
+                mini = norm
+                index = nei
+
+    return (index, mini)
+
+
+
+def best_match(g_B,g_Bp,level,h,w,feature_matrix,indices,mapper,rev_map,index_structure):
+    pixel_feature=get_feature_vector(g_B,g_Bp,h,w,level)
+
+    global approx_time,coh_time
+    t1=time.time()
+    # pixel_appr,norm_appr=best_approx_match(feature_matrix,pixel_feature,indices)
+    pixel_appr, norm_appr = fast_approx_match(
+        index_structure, pixel_feature, indices)
+    t2 = time.time()
+    approx_time+=t2-t1
+    pixel_cohr,norm_cohr=best_coherence_match(h,w,mapper,feature_matrix,rev_map,pixel_feature)
+    t1=time.time()
+    coh_time+=t1-t2
+
+    tot_level=len(g_B)
+
+    if norm_cohr<=norm_appr*(1+(2**(level-tot_level))*kappa):
+        # print("Coherence")
+        return pixel_cohr
     
+    # print("Approx")
+    return pixel_appr
 
+def resize(img):
+    h,w,_=img.shape
+    fact = 256.0/h
+    return cv2.resize(img,dsize=None,fx=fact,fy=fact)
 
+def create_image_analogy(img_A,img_Ap,img_B,output_image_folder,levels=5):
+    global coh_time,approx_time
+    img_A=resize(img_A)
+    img_Ap=resize(img_Ap)
+    img_B=resize(img_B)
+    gaussian_A=pyramid.gaussian_pyramid(img_A,levels=levels)
+    gaussian_Ap = pyramid.gaussian_pyramid(img_Ap,levels=levels)
+    gaussian_B = pyramid.gaussian_pyramid(img_B,levels=levels)
 
+    gaussian_Bp=[]
+    for image in gaussian_B:
+        gaussian_Bp.append(np.zeros_like(image))
+    
+    for level in range(levels-1,-1,-1):
+        print("Processing level:",level)
+        height,width,_=gaussian_B[level].shape
+        feature_matrix,indices,rev_map=get_feature_matrix(gaussian_A,gaussian_Ap,level)
+        print(height,width)
+        print("feature_matrix shape:",feature_matrix.shape)
+
+        """
+        Constructing index structure
+        """  
+        print("Constructing index structure")      
+        dimension=(n_channel)*(2*n_coarse*n_coarse+n_fine*n_fine+half)
+        print(dimension)
+        index_structure = PannsIndex(dimension=dimension, metric='euclidean')
+        index_structure.parallelize(True)
+        index_structure.load_matrix(feature_matrix)
+        index_structure.build(1)
+        print("Finished Construction")
+
+        mapper={}
+
+        for h in range(height):
+            for w in range(width):
+                pixel=best_match(gaussian_B,gaussian_Bp,level,h,w,feature_matrix,indices,mapper,rev_map,index_structure)
+                gaussian_Bp[level][h,w,:]=gaussian_Ap[level][pixel[0],pixel[1],:]
+                mapper[(h,w)]=pixel
+            print(h)
+            # print(coh_time)
+            # print(approx_time)
+            # approx_time=0
+            # coh_time=0
+
+        path = os.path.join(output_image_folder, "analogy_"+str(level)+".jpg")
+        cv2.imwrite(path,gaussian_Bp[level])
+
+    path = os.path.join(output_image_folder, "A"+".jpg")
+    cv2.imwrite(path, gaussian_A[0])
+    path = os.path.join(output_image_folder, "Ap"+".jpg")
+    cv2.imwrite(path, gaussian_Ap[0])
+    path = os.path.join(output_image_folder, "B"+".jpg")
+    cv2.imwrite(path, gaussian_B[0])
+    path = os.path.join(output_image_folder, "Bp"+".jpg")
+    cv2.imwrite(path, gaussian_Bp[0])
 
 
 def main():
@@ -82,15 +259,18 @@ def main():
     parser.add_argument('--dest', dest='dest_image', help="Enter dest Image Path", required=True, type=str)
     parser.add_argument('--levels', dest='levels', help="Enter no. of levels for pyramid", default=5, type=int)
     parser.add_argument('--output', dest='output_image_folder', help="Enter Output Image folder", required=True, type=str)
+    parser.add_argument('--kappa', dest='kappa',
+                        help="Enter Kappa", default=5.0, type=float)
     args=parser.parse_args()
 
     os.system("mkdir -p "+args.output_image_folder)
 
     A =cv2.imread(args.source_image, cv2.IMREAD_COLOR)
-    A_f = cv2.imread(args.filtered_source, cv2.IMREAD_COLOR)
-    B = cv2.imread(args.dest, cv2.IMREAD_COLOR)
-
-    create_image_analogy(A,A_f,B,args.levels)
+    Ap = cv2.imread(args.filtered_source, cv2.IMREAD_COLOR)
+    B = cv2.imread(args.dest_image, cv2.IMREAD_COLOR)
+    global kappa
+    kappa=args.kappa
+    create_image_analogy(A,Ap,B,args.output_image_folder,args.levels)
 
 
 if __name__=='__main__':
