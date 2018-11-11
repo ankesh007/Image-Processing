@@ -27,7 +27,7 @@ def gaussian_pyramid(img,levels=5):
     levels=min(levels,int(math.log(min(height,width),2)))
     image_list=[img]
 
-    for level in range(levels):
+    for level in range(levels-1):
         img=pyramid_down(img)
         image_list.append(img)
 
