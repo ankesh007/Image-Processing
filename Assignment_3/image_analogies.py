@@ -7,6 +7,7 @@ import os
 import scipy.ndimage
 import math
 import pyramid
+import preprocess
 from sklearn.feature_extraction.image import extract_patches_2d
 import time
 from panns import *
@@ -14,12 +15,13 @@ from panns import *
 https://github.com/ryanrhymes/panns
 """
 #keep them odd
-n_fine=3
+n_fine=5
 n_coarse=3
 n_channel=3
 # half is used only with fine scale
 half=(n_fine**2)//2
 kappa=2
+size=64
 inf=10**20
 
 approx_time=0
@@ -63,7 +65,7 @@ def get_feature_matrix(g_A,g_Ap,level=5):
     # feat_A_lprev=get_feature_matrix_(pyramid.pyramid_up(g_A[upp],g_A[level].shape),n_coarse,last=flag)
     feat_A_lprev=get_feature_matrix_(g_A[upp],n_coarse,last=flag)
     feat_Ap_l=get_feature_matrix_(g_Ap[level],n_fine,keep_half=True)
-    # feat_Ap_lprev = get_feature_matrix_(pyramid.pyramid_up(g_Ap[upp], g_Ap[level].shape), n_coarse,last=flag)
+    # feat_Ap_lprev = get_features_matrix_(pyramid.pyramid_up(g_Ap[upp], g_Ap[level].shape), n_coarse,last=flag)
     feat_Ap_lprev = get_feature_matrix_(g_Ap[upp], n_coarse,last=flag)
     # print(feat_A_l[0])
     # print(feat_A_lprev[0])
@@ -204,14 +206,11 @@ def best_match(g_B,g_Bp,level,h,w,feature_matrix,indices,mapper,rev_map,index_st
 
 def resize(img):
     h,w,_=img.shape
-    fact = 64.0/h
+    fact = size/h
     return cv2.resize(img,dsize=None,fx=fact,fy=fact)
 
 def create_image_analogy(img_A,img_Ap,img_B,output_image_folder,levels=5):
-    global coh_time,approx_time
-    img_A=resize(img_A)
-    img_Ap=resize(img_Ap)
-    img_B=resize(img_B)
+    # global coh_time,approx_time
     gaussian_A=pyramid.gaussian_pyramid(img_A,levels=levels)
     gaussian_Ap = pyramid.gaussian_pyramid(img_Ap,levels=levels)
     gaussian_B = pyramid.gaussian_pyramid(img_B,levels=levels)
@@ -238,7 +237,7 @@ def create_image_analogy(img_A,img_Ap,img_B,output_image_folder,levels=5):
         index_structure = PannsIndex(dimension=dimension, metric='euclidean')
         index_structure.parallelize(True)
         index_structure.load_matrix(feature_matrix)
-        index_structure.build(4)
+        index_structure.build(2)
         print("Finished Construction")
 
         mapper={}
@@ -254,17 +253,56 @@ def create_image_analogy(img_A,img_Ap,img_B,output_image_folder,levels=5):
             # approx_time=0
             # coh_time=0
 
-        path = os.path.join(output_image_folder, "analogy_"+str(level)+".jpg")
-        cv2.imwrite(path,gaussian_Bp[level])
+        # path = os.path.join(output_image_folder, "analogy_"+str(level)+".jpg")
+        # cv2.imwrite(path,gaussian_Bp[level])
 
+    return gaussian_Bp[0]
+
+
+
+def image_analogy(img_A,img_Ap,img_B,output_image_folder,levels=5,mode="RGB"):
+    img_A=resize(img_A)
+    img_Ap=resize(img_Ap)
+    img_B=resize(img_B)
+    img_Bp=np.copy(img_B)
+    # print(type(img_A[0,0,0]))
+
+    if(mode=="RGB"):
+        img_Bp=create_image_analogy(img_A,img_Ap,img_B,output_image_folder,levels)
+
+    else:
+        img_A/=255
+        img_Ap/=255
+        img_B/=255
+        img_Bp/=255
+        # print(img_A)
+        img_A_YIQ=preprocess.convert_to_YIQ(img_A)
+        img_Ap_YIQ=preprocess.convert_to_YIQ(img_Ap)
+        img_B_YIQ=preprocess.convert_to_YIQ(img_B)
+        img_Bp_YIQ=np.copy(img_B_YIQ)
+
+
+        img_A_YIQ[:,:,0],img_Ap_YIQ[:,:,0]=preprocess.remap_luminance(img_A_YIQ[:,:,0],img_Ap_YIQ[:,:,0],img_B_YIQ[:,:,0])
+        global n_channel
+        n_channel=1
+        img_Bp_YIQ[:,:,0:1]=create_image_analogy(img_A_YIQ[:,:,0:1],img_Ap_YIQ[:,:,0:1],img_B_YIQ[:,:,0:1],output_image_folder,levels)
+        img_A=preprocess.convert_to_RGB(img_A_YIQ)*255
+        img_Ap=preprocess.convert_to_RGB(img_Ap_YIQ)*255
+        img_B=preprocess.convert_to_RGB(img_B_YIQ)*255
+        img_Bp=preprocess.convert_to_RGB(img_Bp_YIQ)*255
+
+        # print(img_A_YIQ.shape)
+        # img_A_YIQ=preprocess.convert_to_RGB(img_A_YIQ)
+        # img_A_YIQ*=255
+    
     path = os.path.join(output_image_folder, "A"+".jpg")
-    cv2.imwrite(path, gaussian_A[0])
+    cv2.imwrite(path, img_A)
     path = os.path.join(output_image_folder, "Ap"+".jpg")
-    cv2.imwrite(path, gaussian_Ap[0])
+    cv2.imwrite(path, img_Ap)
     path = os.path.join(output_image_folder, "B"+".jpg")
-    cv2.imwrite(path, gaussian_B[0])
+    cv2.imwrite(path, img_B)
     path = os.path.join(output_image_folder, "Bp"+".jpg")
-    cv2.imwrite(path, gaussian_Bp[0])
+    cv2.imwrite(path, img_Bp)
 
 
 def main():
@@ -274,18 +312,21 @@ def main():
     parser.add_argument('--dest', dest='dest_image', help="Enter dest Image Path", required=True, type=str)
     parser.add_argument('--levels', dest='levels', help="Enter no. of levels for pyramid", default=5, type=int)
     parser.add_argument('--output', dest='output_image_folder', help="Enter Output Image folder", required=True, type=str)
+    parser.add_argument('--resize_height', dest='resize', help="Enter resize parameter", default=64, type=float)
+    parser.add_argument('--mode', dest='mode', help="RGB or YIQ", default="RGB", type=str)
     parser.add_argument('--kappa', dest='kappa',
                         help="Enter Kappa", default=5.0, type=float)
     args=parser.parse_args()
 
     os.system("mkdir -p "+args.output_image_folder)
 
-    A =cv2.imread(args.source_image, cv2.IMREAD_COLOR)
-    Ap = cv2.imread(args.filtered_source, cv2.IMREAD_COLOR)
-    B = cv2.imread(args.dest_image, cv2.IMREAD_COLOR)
-    global kappa
+    A =cv2.imread(args.source_image, cv2.IMREAD_COLOR).astype(np.float)
+    Ap = cv2.imread(args.filtered_source, cv2.IMREAD_COLOR).astype(np.float)
+    B = cv2.imread(args.dest_image, cv2.IMREAD_COLOR).astype(np.float)
+    global kappa,size
     kappa=args.kappa
-    create_image_analogy(A,Ap,B,args.output_image_folder,args.levels)
+    size=args.resize
+    image_analogy(A,Ap,B,args.output_image_folder,args.levels,args.mode)
 
 
 if __name__=='__main__':

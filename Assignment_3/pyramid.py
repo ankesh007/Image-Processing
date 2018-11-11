@@ -10,7 +10,11 @@ import math
 
 # Apply kernel and downsample
 def pyramid_down(img,sigma=1):
+    # print(img.shape)
     blur = cv2.GaussianBlur(img,(5,5),0)
+    # print(blur.shape)
+    if(len(blur.shape)==2):
+        blur=blur[:,:,np.newaxis]
     #downsampling
     return blur[::2,::2,:]
 
