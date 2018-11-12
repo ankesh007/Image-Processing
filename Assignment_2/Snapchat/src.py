@@ -65,8 +65,7 @@ while True:
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     faces = faceCascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(40, 40))
-    print(len(faces))
-    print(faces)
+
     for (x, y, w, h) in faces:
         if ch == 0:
             frame = apply_mst(mst, frame, x, y, w, h)
