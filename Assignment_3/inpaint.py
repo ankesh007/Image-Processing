@@ -4,7 +4,8 @@ from math import sqrt as sqrt
 import heapq
 
 # parameters
-in_path = 'test.jpg'
+# in_path = 'test.png'
+in_path = 'chess.jpg'
 drawsize = 5
 
 # global variables

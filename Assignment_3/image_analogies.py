@@ -322,6 +322,7 @@ def main():
 
     A =cv2.imread(args.source_image, cv2.IMREAD_COLOR).astype(np.float)
     Ap = cv2.imread(args.filtered_source, cv2.IMREAD_COLOR).astype(np.float)
+    Ap=255-A
     B = cv2.imread(args.dest_image, cv2.IMREAD_COLOR).astype(np.float)
     global kappa,size
     kappa=args.kappa
