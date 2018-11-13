@@ -4,7 +4,7 @@ from math import sqrt as sqrt
 import heapq
 
 # parameters
-in_path = 'test.png'
+in_path = 'test.jpg'
 drawsize = 5
 
 # global variables
@@ -16,10 +16,10 @@ UNKNOWN = -1
 
 
 def solve(x1, y1, x2, y2, h, w, dists, flags):
-    if y1 < 0 or y1 >= h or x1 < 0 or x1 >= w:
+    if y1 < 0 or y1 >= w or x1 < 0 or x1 >= h:
         return INF
 
-    if y2 < 0 or y2 >= h or x2 < 0 or x2 >= w:
+    if y2 < 0 or y2 >= w or x2 < 0 or x2 >= h:
         return INF
 
     flag1 = flags[x1, y1]
@@ -47,7 +47,7 @@ def solve(x1, y1, x2, y2, h, w, dists, flags):
 def inpaint(src_img, mask, radius=5):
     height, width = src_img.shape[0:2]
 
-    dists = np.full((width, height), INF, dtype=float)
+    dists = np.full((height,width), INF, dtype=float)
     flags = mask.astype(int) * UNKNOWN
     band = []
 
@@ -55,7 +55,7 @@ def inpaint(src_img, mask, radius=5):
     for x, y in zip(mask_x, mask_y):
         neighbors = [(x, y - 1), (x - 1, y), (x, y + 1), (x + 1, y)]
         for nx, ny in neighbors:
-            if ny < 0 or ny >= height or nx < 0 or nx >= width:
+            if ny < 0 or ny >= width or nx < 0 or nx >= height:
                 continue
             if flags[nx, ny] == BAND:
                 continue
@@ -70,7 +70,7 @@ def inpaint(src_img, mask, radius=5):
 
         neighbors = [(x, y - 1), (x - 1, y), (x, y + 1), (x + 1, y)]
         for nx, ny in neighbors:
-            if ny < 0 or ny >= height or nx < 0 or nx >= width:
+            if ny < 0 or ny >= width or nx < 0 or nx >= height:
                 continue
 
             if flags[nx, ny] != UNKNOWN:
@@ -88,7 +88,7 @@ def inpaint(src_img, mask, radius=5):
             grad_x = INF
             prev_x = nx - 1
             next_x = nx + 1
-            if prev_x >= 0 and next_x < width:
+            if prev_x >= 0 and next_x < height:
                 flag_prev_x = flags[prev_x, ny]
                 flag_next_x = flags[next_x, ny]
 
@@ -121,11 +121,11 @@ def inpaint(src_img, mask, radius=5):
             weight_sum = 0.0
 
             for nb1_y in range(ny - radius, ny + radius + 1):
-                if nb1_y < 0 or nb1_y >= height:
+                if nb1_y < 0 or nb1_y >= width:
                     continue
 
                 for nb1_x in range(nx - radius, nx + radius + 1):
-                    if nb1_x < 0 or nb1_x >= width:
+                    if nb1_x < 0 or nb1_x >= height:
                         continue
 
                     if flags[nb1_x, nb1_y] == UNKNOWN:
@@ -183,7 +183,7 @@ def draw_circle(event, x, y, flags, param):
 
 img = cv2.imread(in_path)
 height, width = img.shape[0:2]
-img2 = np.zeros((width, height, 3), np.uint8)
+img2 = np.zeros((height, width, 3), np.uint8)
 
 img1 = img.copy()
 cv2.namedWindow('image')
