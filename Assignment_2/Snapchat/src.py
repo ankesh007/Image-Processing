@@ -1,6 +1,6 @@
 import cv2
 
-ch = 1
+ch = 3
 
 faceCascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 mst = cv2.imread('moustache.png')
