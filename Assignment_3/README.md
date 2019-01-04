@@ -33,4 +33,4 @@ To run image inpainting algorithm:
 
 `python3 inpaint.py`
 
-Note: The file works with hard_coded image path. Please make necessary changes to make it an argument. I am lazy to make this change. 
+Note: The file works with hard_coded image path. Please make necessary changes to make it an argument. I am too lazy to make this change :p 
